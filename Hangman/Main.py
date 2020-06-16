@@ -3,6 +3,7 @@ import sys
 import random
 import string
 import time
+import os
 
 # ----------------------------------------------------#
 # Initialize global variables#
@@ -36,41 +37,50 @@ alphabetString = string.ascii_uppercase
 alphabet = list(alphabetString)
 
 wordFont = pygame.font.Font('freesansbold.ttf', 15)
-livesFont = pygame.font.Font('freesansbold.ttf', 25)
-clockFont = pygame.font.Font('freesansbold.ttf', 20)
+livesFont = pygame.font.SysFont('arial', 25)
+clockFont = pygame.font.SysFont('monospace', 20)
 bigFont = pygame.font.Font('freesansbold.ttf', 40)
-endFont = pygame.font.Font('freesansbold.ttf', 30)
-winLoseFont = pygame.font.Font('freesansbold.ttf', 50)
-gameNameFont = pygame.font.Font('freesansbold.ttf', 90)
-nameFont = pygame.font.Font('freesansbold.ttf', 10)
+endFont = pygame.font.SysFont('comicsansms', 30)
+winLoseFont = pygame.font.SysFont('comicsansms', 50)
+gameFont = pygame.font.Font(os.path.join('Font','gameFont.TTF'), 40)
+gameNameFont = pygame.font.Font(os.path.join('Font','crackman.TTF'), 90)
+nameFont = pygame.font.Font(os.path.join('Font','nameFont.TTF'), 30)
 
-hangman1 = pygame.image.load('hangPic1.png')
-hangman2 = pygame.image.load('hangPic2.png')
-hangman3 = pygame.image.load('hangPic3.png')
-hangman4 = pygame.image.load('hangPic4.png')
-hangman5 = pygame.image.load('hangPic5.png')
-hangman6 = pygame.image.load('hangPic6.png')
-hangman7 = pygame.image.load('hangPic7.png')
+hangman1 = pygame.image.load(os.path.join('Images', 'hangPic1.png'))
+hangman2 = pygame.image.load(os.path.join('Images', 'hangPic2.png'))
+hangman3 = pygame.image.load(os.path.join('Images', 'hangPic3.png'))
+hangman4 = pygame.image.load(os.path.join('Images', 'hangPic4.png'))
+hangman5 = pygame.image.load(os.path.join('Images', 'hangPic5.png'))
+hangman6 = pygame.image.load(os.path.join('Images', 'hangPic6.png'))
+hangman7 = pygame.image.load(os.path.join('Images', 'hangPic7.png'))
 hangManPic = [hangman1, hangman2, hangman3, hangman4, hangman5, hangman6, hangman7]
 
-tickImg = pygame.image.load('tick.png')
-XImg = pygame.image.load('cross.png')
-
 clock = pygame.time.Clock()
-FPS = 10
+FPS = 30
+
+tickSound = pygame.mixer.Sound(os.path.join('Sound','tickSound.wav'))
+tickImg = pygame.image.load(os.path.join('Images','tick.png'))
+wrongSound = pygame.mixer.Sound(os.path.join('Sound','wrongSound.wav'))
+XImg = pygame.image.load(os.path.join('Images','cross.png'))
+cheer = pygame.mixer.Sound(os.path.join('Sound','cheer.wav'))
+lose = pygame.mixer.Sound(os.path.join('Sound','loser.wav'))
+
+music = pygame.mixer.music.load(os.path.join('Sound','music.mp3'))
+
 
 # Initialize clock and lives
 def loseCon():
     global lives, timing
     timing -= 0.1
     timing = round(timing, 1)
-    livesShow = livesFont.render("Lives: ", True, BLACK)
-    timeShow = clockFont.render("Time: ", True, BLACK)
+    livesShow = livesFont.render("Lives: ", True, WHITE)
+    timeShow = clockFont.render("Time: ", True, WHITE)
+    blackBg = pygame.image.load(os.path.join('Images', 'blackbg.jpg'))
 
     if timing <= 50:
         timeNum = clockFont.render(str(timing), True, RED)
     else:
-        timeNum = clockFont.render(str(timing), True, GREEN)
+        timeNum = clockFont.render(str(timing), True, WHITE)
 
     if lives >= 7:
         num = livesFont.render(str(lives), True, GREEN)
@@ -78,8 +88,9 @@ def loseCon():
         num = livesFont.render(str(lives), True, YELLOW)
     else:
         num = livesFont.render(str(lives), True, RED)
- 
-    screen.blit(livesShow, [765, 280])
+
+    screen.blit(blackBg, [750, 250])
+    screen.blit(livesShow, [780, 280])
     screen.blit(num, [850, 280])
 
     screen.blit(timeShow, [765, 350])
@@ -105,6 +116,16 @@ def hangMan(lis):
 
     screen.blit(lis[index], (50, 200))
 
+
+def setting(image):
+    bgImage = pygame.image.load(os.path.join('Images', image))
+    screen.blit(bgImage, (0, 0))
+
+
+def titleIcon(title, icon):
+    pygame.display.set_caption(title)
+    iconImage = pygame.image.load(os.path.join('Images', icon))
+    pygame.display.set_icon(iconImage)
 
 
 def word():
@@ -255,7 +276,8 @@ def restart():
     randomWord = word()
     wordList = wordListClone
     wordList = split(randomWord)
-
+    pygame.mixer.music.unpause()
+    lose.stop()
 
 randomWord = word()
 wordList = split(randomWord)
@@ -270,13 +292,13 @@ def draw(lis):
 
 
 def mainGame():
-    global lives, wordListClone, rightGuesses, randomWord, wordList
+    global lives, wordListClone, rightGuesses, randomWord, wordList, tickSound, wrongSound
     gameRun = True
+    pygame.mixer.music.play(-1)
 
     while gameRun:
         clock.tick(FPS)
-        screen.fill(WHITE)
-
+        setting('wall.jpg')
         drawLines()
         drawButtons()
         drawAlphabet()
@@ -298,6 +320,7 @@ def mainGame():
                         drawTick.append([tickImg, [buttons[i][0], buttons[i][1]]])
                         indexes = duplicate(alphabet[i].lower(), wordList)
                         spaceOut.append(buttons[i][1] - 100)
+                        tickSound.play()
 
                         for x in indexes:
                             right = bigFont.render(wordList[x], True, BLACK)
@@ -305,6 +328,7 @@ def mainGame():
                             rightGuesses.append(i)
 
                     else:
+                        wrongSound.play()
                         drawX.append([XImg, [buttons[i][0], buttons[i][1]]])
 
         wordListClone = nonDupList(wordListClone)
@@ -315,13 +339,15 @@ def mainGame():
         draw(drawTick)
 
         if win(wordListClone, rightGuesses):
+            cheer.play()
             endText(True)
             wordList = split(randomWord)
             wordListClone = wordList
 
         if lives == 0 or timing == 0:
+            pygame.mixer.music.pause()
             time.sleep(0.2)
-        
+            lose.play()
             endText(False)
             wordList = split(randomWord)
             wordListClone = wordList
@@ -329,12 +355,13 @@ def mainGame():
         pygame.display.update()
 
 
-def start():
+def GUI():
     global width, height
 
-    pygame.display.set_caption('Hang man')
+    titleIcon('Hang man', 'icon.png')
     halfW, halfH = width / 2 - 200, height / 2
-    screen.fill(GREEN)
+    hangmanBG = pygame.image.load(os.path.join('Images', 'hangmanBG.jpg'))
+    screen.blit(hangmanBG, (0, 0))
 
     gameName = "HANG MAN"
     text = "Press any key to start"
@@ -343,11 +370,11 @@ def start():
     game = gameNameFont.render(gameName, True, WHITE)
     screen.blit(game, (220, 50))
 
-    start = bigFont.render(text, True, WHITE)
-    screen.blit(start, (round(halfW), round(halfH - 30)))
+    start = gameFont.render(text, True, WHITE)
+    screen.blit(start, (90, round(halfH - 30)))
 
     myName = nameFont.render(name, True, BLACK)
-    screen.blit(myName, (round(halfW + 180), round(halfH + 30)))
+    screen.blit(myName, (round(halfW + 140), round(halfH + 30)))
     pygame.display.update()
 
     play = True
@@ -361,5 +388,5 @@ def start():
                 play = False
 
 
-start()
+GUI()
 pygame.quit()
